@@ -1,0 +1,10 @@
+#!/bin/sh
+cd /boot/home/projects/LiftOff/PackagingFolder
+package create -b liftoff_0.1-1_gcc2.hpkg
+sleep 0.5
+package add liftoff_0.1-1_gcc2.hpkg data documentation apps bin
+sleep 0.5
+addattr BeShare:Info "An application launcher" liftoff_0.1-1_gcc2.hpkg
+becopy liftoff_0.1-1_gcc2.hpkg "/Storage/Haiku/My ports"
+mv liftoff_0.1-1_gcc2.hpkg /boot/home/projects/repo2
+sync

@@ -1,0 +1,14 @@
+sub OpenWindow()
+	//Setup the main window here
+	window open startx,5 to startx + 200,peek("desktopheight") - 8, "MainWindow", "Main Window"
+	window set "MainWindow", "look", "modal"
+	window set "MainWindow", "feel", "modal-app"
+	window set "MainWindow", "flags", "Not-Resizable"
+	window set "MainWindow", "flags", "Accept-First-Click"
+	window set "MainWindow", "flags", "Not-Minimizable"
+	draw set "DejaVu Sans, Book, 12, regular, 0, 90.0", "MainWindow"
+	//above prevents a mess caused by user changing his system fonts
+	MakeMenu()
+	MakeListbox()
+end sub
+

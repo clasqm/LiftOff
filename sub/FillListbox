@@ -1,0 +1,38 @@
+sub FillListbox()
+	local OneApp$, app, pref, b$(1), q$(1)
+	// a$() long aplication names
+	// b$() short application names
+	// p$() long preferences names
+	// q$() short preferences names
+	app=1
+	pref=1
+	open InputFile$ for reading as #1
+	repeat
+		line input #1 OneApp$
+		if instr(OneApp$,".so") then
+			//some stray libraries got into the system. 
+			line input #1 OneApp$
+		elseif instr(OneApp$,"/apps/") then
+			b$(app) = ParseApp$(OneApp$)
+			a$(app) = right$(OneApp$, len(OneApp$) - len(b$(app)))
+			app = app +1
+			dim a$(app)
+			dim b$(app)
+		elseif instr(OneApp$,"/preferences/") then
+			q$(pref) = ParseApp$(OneApp$)
+			p$(pref) = right$(OneApp$, len(OneApp$) - len(q$(pref)))
+			pref = pref +1
+			dim p$(pref)
+			dim q$(pref)
+		endif
+	until(eof(1))
+	close #1
+	
+	for f = 1 to app
+		listbox add "Appslist", b$(f)
+	next f
+	for f = 1 to pref
+		listbox add "Prefslist", q$(f)
+	next f
+end sub
+

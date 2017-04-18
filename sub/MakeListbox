@@ -1,0 +1,9 @@
+sub MakeListbox()
+	tabview 0,20to (window get "MainWindow", "width"), (window get "MainWindow", "height"), "Maintab", "top", "MainWindow" 
+	tabview add "Maintab", "Applications"
+	tabview add "Maintab", "Preferences"
+	listbox 0,5 to (window get "MainWindow", "width"), (window get "MainWindow", "height") -10, "Appslist", 1, "Maintab1"
+	listbox 0,5 to (window get "MainWindow", "width"), (window get "MainWindow", "height") -10, "Prefslist", 1, "Maintab2"
+	FillListbox()
+end sub
+

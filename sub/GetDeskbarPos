@@ -1,0 +1,22 @@
+sub GetDeskbarPos()
+	//get the position of the deskbar menu and place liftoff
+	//on the other side of the screen
+	local position
+	position = peek("deskbarposition")
+	switch position
+	//db on left
+		case 1
+		case 2
+		case 5
+		case 6
+		startx = peek("desktopwidth") -210
+		break
+	//db on right
+		case 3
+		case 4
+		default
+		startx = 10
+		break
+	end switch
+end sub
+

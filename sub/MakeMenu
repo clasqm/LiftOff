@@ -1,0 +1,8 @@
+sub MakeMenu()
+	//Create menu in MainWindow
+	menu "File", "Refresh", "R", "MainWindow"
+	menu "File", "Quit", "Q", "MainWindow"
+	menu "Help", "Help", "", "MainWindow"
+	menu "Help", "About", "", "MainWindow"
+end sub
+

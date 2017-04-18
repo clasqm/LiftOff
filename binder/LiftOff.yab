@@ -1,0 +1,230 @@
+#!/bin/env yab
+################################
+############# Prologue #############
+################################
+
+//Yabadabbadoo notification
+########DO NOT RENAME THIS FILE!########
+//Yabadabbadoo needs it to function.
+ 
+##Fill in these fields with your own particulars.
+##The variables will be used in the About Box and in naming the program.
+ 
+ProgramName$ = "LiftOff"
+AuthorName$ = "Michel Clasquin-Johnson (clasqm)"
+ProgramVersion$ = "V0.1"
+ProgramBriefDescription$ = "An application launcher"
+ProgramLicense$ = "Public Domain"
+ProgramAcknowledgements$ ="With thanks to Giovanni Mugnai (Giova84)."
+
+//Note: the libclasqm library package is required to develop this program
+//or even to run it from source
+
+import libclasqm_main
+ 
+//*************************
+//*****Global Variables****
+//*************************
+ 
+## Technically, yab does not require you to declare global variables,
+##It just is a really, really good idea to do it anyway.
+
+// set DEBUG = 1 to print out all messages on the console
+DEBUG = 0
+//change this to DEBUG = 0 when you are ready to bind the program for distribution
+ 
+startx = 100 
+DeskbarPosition = 3
+
+// a$() long aplication names
+// p$() long preferences names
+dim a$(1)
+dim p$(1)
+ 
+##########################
+######Preliminary Commands#####
+##########################
+
+## Commands to run before the Main Loop come here.
+## e.g. setting up a window with a menu.
+
+InputFile$ = TempDir$()+ "/apps4liftoff.txt"
+if FileExists(InputFile$) = 0 then
+	system("getapps4liftoff")
+endif
+
+if FileExists("/boot/home/config/settings/liftoff_1st") = 0 then
+	ShowHelp("This appears to be the first time you have run LiftOff.\n\n")
+	system("touch /boot/home/config/settings/liftoff_1st")
+endif
+close #1
+
+GetDeskbarPos()
+ 
+OpenWindow()
+ 
+#######End of Prologue#######
+
+
+//Yabadabbadoo notification
+########DO NOT RENAME THIS FILE!########
+//Yabadabbadoo needs it to function.
+
+//Main Message Loop
+dim msg$(1)
+while(not leavingLoop)
+	nCommands = token(message$, msg$(), "|")
+	for everyCommand = 1 to nCommands
+		if(DEBUG and msg$(everyCommand)<>"") print msg$(everyCommand)
+		switch(msg$(everyCommand))
+			case "_QuitRequested"
+			case "MainWindow:_QuitRequested"
+			case "MainWindow:File:Quit"
+				leavingLoop = true
+				break
+			case "MainWindow:File:Refresh"
+				listbox clear "Appslist"
+				listbox clear "Prefslist"
+				system("getapps4liftoff")
+				listbox clear "Appslist"
+				FillListbox()
+				break
+			case "MainWindow:Help:About"
+				Alert ProgramName$ + " " + ProgramVersion$ + "\n" + "by " + AuthorName$ +"\n\n" + ProgramBriefDescription$ + "\n" + ProgramLicense$ + "\n" + ProgramAcknowledgements$, "OK", "none"
+				break
+			case "MainWindow:Help:Help"
+				ShowHelp("")
+				break
+			default:
+				break
+		end switch
+		if instr(msg$(everyCommand),"Appslist:_Select:") then
+			launch a$(val(mid$(msg$(everyCommand), 18)))
+			CloseWindow()
+		elseif instr(msg$(everyCommand),"Prefslist:_Select:") then
+			launch p$(val(mid$(msg$(everyCommand), 19)))
+			CloseWindow()
+		endif
+	next everyCommand
+wend
+
+CloseWindow()
+
+sub CloseWindow()
+	//Close down the main window
+	window close "MainWindow"
+	end
+end sub
+
+sub FillListbox()
+	local OneApp$, app, pref, b$(1), q$(1)
+	// a$() long aplication names
+	// b$() short application names
+	// p$() long preferences names
+	// q$() short preferences names
+	app=1
+	pref=1
+	open InputFile$ for reading as #1
+	repeat
+		line input #1 OneApp$
+		if instr(OneApp$,".so") then
+			//some stray libraries got into the system. 
+			line input #1 OneApp$
+		elseif instr(OneApp$,"/apps/") then
+			b$(app) = ParseApp$(OneApp$)
+			a$(app) = right$(OneApp$, len(OneApp$) - len(b$(app)))
+			app = app +1
+			dim a$(app)
+			dim b$(app)
+		elseif instr(OneApp$,"/preferences/") then
+			q$(pref) = ParseApp$(OneApp$)
+			p$(pref) = right$(OneApp$, len(OneApp$) - len(q$(pref)))
+			pref = pref +1
+			dim p$(pref)
+			dim q$(pref)
+		endif
+	until(eof(1))
+	close #1
+	
+	for f = 1 to app
+		listbox add "Appslist", b$(f)
+	next f
+	for f = 1 to pref
+		listbox add "Prefslist", q$(f)
+	next f
+end sub
+
+sub GetDeskbarPos()
+	//get the position of the deskbar menu and place liftoff
+	//on the other side of the screen
+	local position
+	position = peek("deskbarposition")
+	switch position
+	//db on left
+		case 1
+		case 2
+		case 5
+		case 6
+		startx = peek("desktopwidth") -210
+		break
+	//db on right
+		case 3
+		case 4
+		default
+		startx = 10
+		break
+	end switch
+end sub
+
+sub MakeListbox()
+	tabview 0,20to (window get "MainWindow", "width"), (window get "MainWindow", "height"), "Maintab", "top", "MainWindow" 
+	tabview add "Maintab", "Applications"
+	tabview add "Maintab", "Preferences"
+	listbox 0,5 to (window get "MainWindow", "width"), (window get "MainWindow", "height") -10, "Appslist", 1, "Maintab1"
+	listbox 0,5 to (window get "MainWindow", "width"), (window get "MainWindow", "height") -10, "Prefslist", 1, "Maintab2"
+	FillListbox()
+end sub
+
+sub MakeMenu()
+	//Create menu in MainWindow
+	menu "File", "Refresh", "R", "MainWindow"
+	menu "File", "Quit", "Q", "MainWindow"
+	menu "Help", "Help", "", "MainWindow"
+	menu "Help", "About", "", "MainWindow"
+end sub
+
+sub OpenWindow()
+	//Setup the main window here
+	window open startx,5 to startx + 200,peek("desktopheight") - 8, "MainWindow", "Main Window"
+	window set "MainWindow", "look", "modal"
+	window set "MainWindow", "feel", "modal-app"
+	window set "MainWindow", "flags", "Not-Resizable"
+	window set "MainWindow", "flags", "Accept-First-Click"
+	window set "MainWindow", "flags", "Not-Minimizable"
+	draw set "DejaVu Sans, Book, 12, regular, 0, 90.0", "MainWindow"
+	//above prevents a mess caused by user changing his system fonts
+	MakeMenu()
+	MakeListbox()
+end sub
+
+sub ParseApp$(OneApp$)
+	local syllabs, w$(1), x$(1)
+	syllabs = token(OneApp$, w$(), "/")
+	return w$(1)
+end sub
+
+sub ShowHelp(firsttime$)
+	local the_message$
+	the_message$ = "LIFTOFF HELP\n============\n\n"
+	the_message$ = the_message$ + firsttime$
+	the_message$ = the_message$ + "LiftOff is an application launcher. It always comes up on the opposite side of the Deskbar, and closes down once an app has been launched, with a single click.\n\n"
+	the_message$ = the_message$ + "LiftOff has a link in the Deskbar (in the Desktop applets section), but launching one launcher from another does not make much sense. It is just to get you started.\n\n"
+	the_message$ = the_message$ + "Rather use the Shortcuts preference applet to tie LiftOff to a key. If you are right-handed, for example, you can assign this app to F1, then when it comes up, use the mouse to select the application to launch."
+	alert the_message$, "Ok", "info"
+end sub
+
+########################################
+###DATA statements, if any, come here###
+########################################
+
+

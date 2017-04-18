@@ -1,0 +1,6 @@
+sub ParseApp$(OneApp$)
+	local syllabs, w$(1), x$(1)
+	syllabs = token(OneApp$, w$(), "/")
+	return w$(1)
+end sub
+

@@ -1,0 +1,45 @@
+
+//Yabadabbadoo notification
+########DO NOT RENAME THIS FILE!########
+//Yabadabbadoo needs it to function.
+
+//Main Message Loop
+dim msg$(1)
+while(not leavingLoop)
+	nCommands = token(message$, msg$(), "|")
+	for everyCommand = 1 to nCommands
+		if(DEBUG and msg$(everyCommand)<>"") print msg$(everyCommand)
+		switch(msg$(everyCommand))
+			case "_QuitRequested"
+			case "MainWindow:_QuitRequested"
+			case "MainWindow:File:Quit"
+				leavingLoop = true
+				break
+			case "MainWindow:File:Refresh"
+				listbox clear "Appslist"
+				listbox clear "Prefslist"
+				system("getapps4liftoff")
+				listbox clear "Appslist"
+				FillListbox()
+				break
+			case "MainWindow:Help:About"
+				Alert ProgramName$ + " " + ProgramVersion$ + "\n" + "by " + AuthorName$ +"\n\n" + ProgramBriefDescription$ + "\n" + ProgramLicense$ + "\n" + ProgramAcknowledgements$, "OK", "none"
+				break
+			case "MainWindow:Help:Help"
+				ShowHelp("")
+				break
+			default:
+				break
+		end switch
+		if instr(msg$(everyCommand),"Appslist:_Select:") then
+			launch a$(val(mid$(msg$(everyCommand), 18)))
+			CloseWindow()
+		elseif instr(msg$(everyCommand),"Prefslist:_Select:") then
+			launch p$(val(mid$(msg$(everyCommand), 19)))
+			CloseWindow()
+		endif
+	next everyCommand
+wend
+
+CloseWindow()
+
