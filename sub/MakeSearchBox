@@ -1,0 +1,6 @@
+sub MakeSearchBox()
+	textcontrol -2,25 to (window get "MainWindow", "width") - 30, 40, "SearchBox", "", "", "MainWindow"
+	button (window get "MainWindow", "width") -25,24 to (window get "MainWindow", "width") - 3, 48, "SearchButton", "☌", "MainWindow"
+	tooltip "SearchBox", "Enter the text you are\nlooking for (case-insensitive),\nthen press ENTER or press\nthe button to the right to\n search for applications.\n\nUse * to refresh the list."
+end sub
+

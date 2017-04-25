@@ -30,7 +30,7 @@ import libclasqm_main
 ##It just is a really, really good idea to do it anyway.
 
 // set DEBUG = 1 to print out all messages on the console
-DEBUG = 0
+DEBUG = 1
 //change this to DEBUG = 0 when you are ready to bind the program for distribution
  
 startx = 100 
@@ -40,6 +40,8 @@ DeskbarPosition = 3
 // p$() long preferences names
 dim a$(1)
 dim p$(1)
+InputFile$ =""
+SearchFile$ = ""
  
 ##########################
 ######Preliminary Commands#####
@@ -53,11 +55,12 @@ if FileExists(InputFile$) = 0 then
 	system("getapps4liftoff")
 endif
 
+SearchFile$ = TempDir$()+ "/Search4liftoff.txt"
+
 if FileExists("/boot/home/config/settings/liftoff_1st") = 0 then
 	ShowHelp("This appears to be the first time you have run LiftOff.\n\n")
 	system("touch /boot/home/config/settings/liftoff_1st")
 endif
-close #1
 
 GetDeskbarPos()
  
@@ -83,11 +86,7 @@ while(not leavingLoop)
 				leavingLoop = true
 				break
 			case "MainWindow:File:Refresh"
-				listbox clear "Appslist"
-				listbox clear "Prefslist"
-				system("getapps4liftoff")
-				listbox clear "Appslist"
-				FillListbox()
+				Refresh()
 				break
 			case "MainWindow:Help:About"
 				Alert ProgramName$ + " " + ProgramVersion$ + "\n" + "by " + AuthorName$ +"\n\n" + ProgramBriefDescription$ + "\n" + ProgramLicense$ + "\n" + ProgramAcknowledgements$, "OK", "none"
@@ -95,6 +94,15 @@ while(not leavingLoop)
 			case "MainWindow:Help:Help"
 				ShowHelp("")
 				break
+//			case "SearchButton"
+//				if textcontrol get$ "SearchBox" = "" break
+//				if textcontrol get$ "SearchBox" = "*" then 
+//					Refresh()
+//				else
+//					GetSearchItems()
+//					FillListbox(SearchFile$)
+//				endif
+//				break
 			default:
 				break
 		end switch
@@ -104,6 +112,16 @@ while(not leavingLoop)
 		elseif instr(msg$(everyCommand),"Prefslist:_Select:") then
 			launch p$(val(mid$(msg$(everyCommand), 19)))
 			CloseWindow()
+		//test if ENTER was pressed in the search field
+		elseif instr(msg$(everyCommand), "SearchBox") or instr(msg$(everyCommand), "SearchButton") then
+			if textcontrol get$ "SearchBox" = "" break
+			if textcontrol get$ "SearchBox" = "*" then 
+				Refresh()
+				textcontrol clear "SearchBox"
+			else
+				GetSearchItems()
+				FillListbox(SearchFile$)
+			endif
 		endif
 	next everyCommand
 wend
@@ -116,20 +134,22 @@ sub CloseWindow()
 	end
 end sub
 
-sub FillListbox()
-	local OneApp$, app, pref, b$(1), q$(1)
+sub FillListbox(InputFile$)
+	local OneApp$, app, pref, b$(1), q$(1), streamhandle
 	// a$() long aplication names
 	// b$() short application names
 	// p$() long preferences names
 	// q$() short preferences names
+	listbox clear "Appslist"
+	listbox clear "Prefslist"
 	app=1
 	pref=1
-	open InputFile$ for reading as #1
+	streamhandle = open(InputFile$, "r")
 	repeat
-		line input #1 OneApp$
+		line input #streamhandle OneApp$
 		if instr(OneApp$,".so") then
 			//some stray libraries got into the system. 
-			line input #1 OneApp$
+			line input #streamhandle OneApp$
 		elseif instr(OneApp$,"/apps/") then
 			b$(app) = ParseApp$(OneApp$)
 			a$(app) = right$(OneApp$, len(OneApp$) - len(b$(app)))
@@ -143,8 +163,8 @@ sub FillListbox()
 			dim p$(pref)
 			dim q$(pref)
 		endif
-	until(eof(1))
-	close #1
+	until(eof(streamhandle))
+	close streamhandle
 	
 	for f = 1 to app
 		listbox add "Appslist", b$(f)
@@ -176,13 +196,27 @@ sub GetDeskbarPos()
 	end switch
 end sub
 
+sub GetSearchItems()
+	local streamhandlein, streamhandleout, OneApp$, b$(1),  searchtext$
+	streamhandlein = open(InputFile$, "r")
+	streamhandleout = open(SearchFile$, "w")
+	searchtext$ = lower$(textcontrol get$ "SearchBox")
+	repeat
+		line input #streamhandlein OneApp$
+		b$ = lower$(ParseApp$(OneApp$))
+		if instr(b$, searchtext$) print #streamhandleout OneApp$
+	until(eof(streamhandlein))
+	close streamhandlein: close streamhandleout
+	textcontrol clear "SearchBox"
+end sub
+
 sub MakeListbox()
-	tabview 0,20to (window get "MainWindow", "width"), (window get "MainWindow", "height"), "Maintab", "top", "MainWindow" 
+	tabview 0,50 to (window get "MainWindow", "width"), (window get "MainWindow", "height"), "Maintab", "top", "MainWindow" 
 	tabview add "Maintab", "Applications"
 	tabview add "Maintab", "Preferences"
 	listbox 0,5 to (window get "MainWindow", "width"), (window get "MainWindow", "height") -10, "Appslist", 1, "Maintab1"
 	listbox 0,5 to (window get "MainWindow", "width"), (window get "MainWindow", "height") -10, "Prefslist", 1, "Maintab2"
-	FillListbox()
+	FillListbox(InputFile$)
 end sub
 
 sub MakeMenu()
@@ -193,6 +227,12 @@ sub MakeMenu()
 	menu "Help", "About", "", "MainWindow"
 end sub
 
+sub MakeSearchBox()
+	textcontrol -2,25 to (window get "MainWindow", "width") - 30, 40, "SearchBox", "", "", "MainWindow"
+	button (window get "MainWindow", "width") -25,24 to (window get "MainWindow", "width") - 3, 48, "SearchButton", "☌", "MainWindow"
+	tooltip "SearchBox", "Enter the text you are\nlooking for (case-insensitive),\nthen press ENTER or press\nthe button to the right to\n search for applications.\n\nUse * to refresh the list."
+end sub
+
 sub OpenWindow()
 	//Setup the main window here
 	window open startx,5 to startx + 200,peek("desktopheight") - 8, "MainWindow", "Main Window"
@@ -201,9 +241,8 @@ sub OpenWindow()
 	window set "MainWindow", "flags", "Not-Resizable"
 	window set "MainWindow", "flags", "Accept-First-Click"
 	window set "MainWindow", "flags", "Not-Minimizable"
-	draw set "DejaVu Sans, Book, 12, regular, 0, 90.0", "MainWindow"
-	//above prevents a mess caused by user changing his system fonts
 	MakeMenu()
+	MakeSearchBox()
 	MakeListbox()
 end sub
 
@@ -211,6 +250,11 @@ sub ParseApp$(OneApp$)
 	local syllabs, w$(1), x$(1)
 	syllabs = token(OneApp$, w$(), "/")
 	return w$(1)
+end sub
+
+sub Refresh()
+	system("getapps4liftoff")
+	FillListbox(InputFile$)
 end sub
 
 sub ShowHelp(firsttime$)

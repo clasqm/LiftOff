@@ -6,9 +6,8 @@ sub OpenWindow()
 	window set "MainWindow", "flags", "Not-Resizable"
 	window set "MainWindow", "flags", "Accept-First-Click"
 	window set "MainWindow", "flags", "Not-Minimizable"
-	draw set "DejaVu Sans, Book, 12, regular, 0, 90.0", "MainWindow"
-	//above prevents a mess caused by user changing his system fonts
 	MakeMenu()
+	MakeSearchBox()
 	MakeListbox()
 end sub
 

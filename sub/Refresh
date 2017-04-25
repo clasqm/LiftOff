@@ -1,0 +1,5 @@
+sub Refresh()
+	system("getapps4liftoff")
+	FillListbox(InputFile$)
+end sub
+

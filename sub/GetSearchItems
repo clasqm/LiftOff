@@ -1,0 +1,14 @@
+sub GetSearchItems()
+	local streamhandlein, streamhandleout, OneApp$, b$(1),  searchtext$
+	streamhandlein = open(InputFile$, "r")
+	streamhandleout = open(SearchFile$, "w")
+	searchtext$ = lower$(textcontrol get$ "SearchBox")
+	repeat
+		line input #streamhandlein OneApp$
+		b$ = lower$(ParseApp$(OneApp$))
+		if instr(b$, searchtext$) print #streamhandleout OneApp$
+	until(eof(streamhandlein))
+	close streamhandlein: close streamhandleout
+	textcontrol clear "SearchBox"
+end sub
+

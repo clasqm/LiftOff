@@ -30,7 +30,7 @@ import libclasqm_main
 ##It just is a really, really good idea to do it anyway.
 
 // set DEBUG = 1 to print out all messages on the console
-DEBUG = 0
+DEBUG = 1
 //change this to DEBUG = 0 when you are ready to bind the program for distribution
  
 startx = 100 
@@ -40,6 +40,8 @@ DeskbarPosition = 3
 // p$() long preferences names
 dim a$(1)
 dim p$(1)
+InputFile$ =""
+SearchFile$ = ""
  
 ##########################
 ######Preliminary Commands#####
@@ -53,11 +55,12 @@ if FileExists(InputFile$) = 0 then
 	system("getapps4liftoff")
 endif
 
+SearchFile$ = TempDir$()+ "/Search4liftoff.txt"
+
 if FileExists("/boot/home/config/settings/liftoff_1st") = 0 then
 	ShowHelp("This appears to be the first time you have run LiftOff.\n\n")
 	system("touch /boot/home/config/settings/liftoff_1st")
 endif
-close #1
 
 GetDeskbarPos()
  

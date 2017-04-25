@@ -1,17 +1,19 @@
-sub FillListbox()
-	local OneApp$, app, pref, b$(1), q$(1)
+sub FillListbox(InputFile$)
+	local OneApp$, app, pref, b$(1), q$(1), streamhandle
 	// a$() long aplication names
 	// b$() short application names
 	// p$() long preferences names
 	// q$() short preferences names
+	listbox clear "Appslist"
+	listbox clear "Prefslist"
 	app=1
 	pref=1
-	open InputFile$ for reading as #1
+	streamhandle = open(InputFile$, "r")
 	repeat
-		line input #1 OneApp$
+		line input #streamhandle OneApp$
 		if instr(OneApp$,".so") then
 			//some stray libraries got into the system. 
-			line input #1 OneApp$
+			line input #streamhandle OneApp$
 		elseif instr(OneApp$,"/apps/") then
 			b$(app) = ParseApp$(OneApp$)
 			a$(app) = right$(OneApp$, len(OneApp$) - len(b$(app)))
@@ -25,8 +27,8 @@ sub FillListbox()
 			dim p$(pref)
 			dim q$(pref)
 		endif
-	until(eof(1))
-	close #1
+	until(eof(streamhandle))
+	close streamhandle
 	
 	for f = 1 to app
 		listbox add "Appslist", b$(f)
